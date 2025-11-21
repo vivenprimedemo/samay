@@ -47,6 +47,16 @@ const cameraPresets = {
 // Texture loader
 const textureLoader = new THREE.TextureLoader();
 
+// Helper function to load textures with high-quality filtering
+function loadTextureWithFiltering(url) {
+    const texture = textureLoader.load(url);
+    texture.anisotropy = renderer.capabilities.getMaxAnisotropy(); // Best quality at angles
+    texture.minFilter = THREE.LinearMipmapLinearFilter; // Smooth when zoomed out
+    texture.magFilter = THREE.LinearFilter; // Smooth when zoomed in
+    texture.generateMipmaps = true; // Enable mipmaps for better LOD
+    return texture;
+}
+
 // Planet texture URLs (local files)
 const planetTextures = {
     sun: 'textures/2k_sun.jpg',
@@ -284,7 +294,7 @@ function createSun() {
 
     // Sun sphere (core) with realistic texture
     const sunGeometry = new THREE.SphereGeometry(50, 64, 64);
-    const sunTexture = textureLoader.load(planetTextures.sun);
+    const sunTexture = loadTextureWithFiltering(planetTextures.sun);
     const sunMaterial = new THREE.MeshBasicMaterial({
         map: sunTexture,
         emissive: 0xffff00,
@@ -328,7 +338,7 @@ function createPlanets() {
 
         // Create material with texture if available, fallback to color
         if (planetTextures[textureKey]) {
-            const texture = textureLoader.load(planetTextures[textureKey]);
+            const texture = loadTextureWithFiltering(planetTextures[textureKey]);
             material = new THREE.MeshStandardMaterial({
                 map: texture,
                 roughness: data.name === 'Jupiter' || data.name === 'Saturn' ? 0.7 : 0.9,
@@ -349,9 +359,9 @@ function createPlanets() {
 
         // Special handling for Earth - add clouds layer
         if (data.name === 'Earth') {
-            // Load Earth textures
-            const earthTexture = textureLoader.load(planetTextures.earth);
-            const cloudTexture = textureLoader.load(planetTextures.earthClouds);
+            // Load Earth textures with high-quality filtering
+            const earthTexture = loadTextureWithFiltering(planetTextures.earth);
+            const cloudTexture = loadTextureWithFiltering(planetTextures.earthClouds);
 
             // Update main material with Earth texture
             planet.material = new THREE.MeshStandardMaterial({
@@ -663,7 +673,7 @@ function createAsteroidBelt() {
 // Create Earth's moon
 function createMoon() {
     const moonGeometry = new THREE.SphereGeometry(7, 32, 32);
-    const moonTexture = textureLoader.load(planetTextures.moon);
+    const moonTexture = loadTextureWithFiltering(planetTextures.moon);
     const moonMaterial = new THREE.MeshStandardMaterial({
         map: moonTexture,
         roughness: 0.9,
