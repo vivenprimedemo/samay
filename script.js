@@ -202,7 +202,7 @@ function init() {
 // Create 3D starfield
 function createStarfield() {
     const starGeometry = new THREE.BufferGeometry();
-    const starCount = 5000;
+    const starCount = 10000;
     const positions = new Float32Array(starCount * 3);
 
     for (let i = 0; i < starCount * 3; i += 3) {
@@ -744,7 +744,7 @@ function createComet() {
 
 // Create meteor shower
 function createMeteors() {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 40; i++) {
         createMeteor();
     }
 }
