@@ -44,6 +44,24 @@ const cameraPresets = {
     outerPlanets: { position: { x: -1200, y: 800, z: 800 }, target: { x: -1200, y: 0, z: 1200 } }
 };
 
+// Texture loader
+const textureLoader = new THREE.TextureLoader();
+
+// Planet texture URLs (local files)
+const planetTextures = {
+    sun: 'textures/2k_sun.jpg',
+    mercury: 'textures/2k_mercury.jpg',
+    venus: 'textures/2k_venus_surface.jpg',
+    earth: 'textures/2k_earth_daymap.jpg',
+    earthClouds: 'textures/2k_earth_clouds.jpg',
+    mars: 'textures/2k_mars.jpg',
+    jupiter: 'textures/2k_jupiter.jpg',
+    saturn: 'textures/2k_saturn.jpg',
+    uranus: 'textures/2k_uranus.jpg',
+    neptune: 'textures/2k_neptune.jpg',
+    moon: 'textures/2k_moon.jpg'
+};
+
 // Initialize Three.js
 function init() {
     // Scene
@@ -264,12 +282,13 @@ function createSun() {
     const innerGlow = new THREE.Mesh(innerGlowGeometry, innerGlowMaterial);
     sunGroup.add(innerGlow);
 
-    // Sun sphere (core)
+    // Sun sphere (core) with realistic texture
     const sunGeometry = new THREE.SphereGeometry(50, 64, 64);
+    const sunTexture = textureLoader.load(planetTextures.sun);
     const sunMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffff00,
+        map: sunTexture,
         emissive: 0xffff00,
-        emissiveIntensity: 1
+        emissiveIntensity: 0.8
     });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     sunGroup.add(sun);
@@ -303,15 +322,58 @@ function createPlanets() {
         // Planet sphere
         const geometry = new THREE.SphereGeometry(data.radius, 64, 64);
 
-        // Enhanced material properties for better visuals
-        const material = new THREE.MeshStandardMaterial({
-            color: data.color,
-            roughness: data.name === 'Jupiter' || data.name === 'Saturn' ? 0.7 : 0.9,
-            metalness: data.name === 'Mercury' ? 0.3 : 0.05,
-            emissive: data.color,
-            emissiveIntensity: data.name === 'Venus' ? 0.15 : 0.08
-        });
+        // Get texture URL based on planet name
+        const textureKey = data.name.toLowerCase();
+        let material;
+
+        // Create material with texture if available, fallback to color
+        if (planetTextures[textureKey]) {
+            const texture = textureLoader.load(planetTextures[textureKey]);
+            material = new THREE.MeshStandardMaterial({
+                map: texture,
+                roughness: data.name === 'Jupiter' || data.name === 'Saturn' ? 0.7 : 0.9,
+                metalness: data.name === 'Mercury' ? 0.3 : 0.05
+            });
+        } else {
+            // Fallback to color if texture not found
+            material = new THREE.MeshStandardMaterial({
+                color: data.color,
+                roughness: data.name === 'Jupiter' || data.name === 'Saturn' ? 0.7 : 0.9,
+                metalness: data.name === 'Mercury' ? 0.3 : 0.05,
+                emissive: data.color,
+                emissiveIntensity: data.name === 'Venus' ? 0.15 : 0.08
+            });
+        }
+
         const planet = new THREE.Mesh(geometry, material);
+
+        // Special handling for Earth - add clouds layer
+        if (data.name === 'Earth') {
+            // Load Earth textures
+            const earthTexture = textureLoader.load(planetTextures.earth);
+            const cloudTexture = textureLoader.load(planetTextures.earthClouds);
+
+            // Update main material with Earth texture
+            planet.material = new THREE.MeshStandardMaterial({
+                map: earthTexture,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+
+            // Add clouds layer (slightly larger sphere)
+            const cloudsGeometry = new THREE.SphereGeometry(data.radius * 1.01, 64, 64);
+            const cloudsMaterial = new THREE.MeshStandardMaterial({
+                map: cloudTexture,
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.NormalBlending
+            });
+            const clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
+            planet.add(clouds);
+
+            // Store clouds for animation
+            planet.userData.clouds = clouds;
+        }
 
         // Position in orbit on same plane
         const angle = (index / planetData.length) * Math.PI * 2;
@@ -601,8 +663,9 @@ function createAsteroidBelt() {
 // Create Earth's moon
 function createMoon() {
     const moonGeometry = new THREE.SphereGeometry(7, 32, 32);
+    const moonTexture = textureLoader.load(planetTextures.moon);
     const moonMaterial = new THREE.MeshStandardMaterial({
-        color: 0xaaaaaa,
+        map: moonTexture,
         roughness: 0.9,
         metalness: 0.1
     });
@@ -1325,6 +1388,11 @@ function animate() {
 
         // Rotate planet on its axis
         planet.rotation.y += 0.01 * timeScale;
+
+        // Animate Earth's clouds (rotate slightly faster than planet)
+        if (planet.userData.clouds) {
+            planet.userData.clouds.rotation.y += 0.012 * timeScale;
+        }
 
         // Animate Saturn's rings (subtle rotation)
         if (planet.userData.rings) {
