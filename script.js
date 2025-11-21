@@ -1666,3 +1666,38 @@ themeToggle.addEventListener('click', () => {
         localStorage.setItem('theme', 'dark-theme');
     }
 });
+
+// Camera Views Toggle
+const cameraToggleBtn = document.getElementById('camera-toggle');
+const cameraPanelContent = document.getElementById('camera-panel-content');
+
+cameraToggleBtn.addEventListener('click', () => {
+    cameraPanelContent.classList.toggle('open');
+});
+
+// Close camera panel when clicking outside
+document.addEventListener('click', (e) => {
+    if (!document.getElementById('camera-presets').contains(e.target)) {
+        cameraPanelContent.classList.remove('open');
+    }
+});
+
+// Timezone Toggle
+const timezoneToggle = document.getElementById('timezone-toggle');
+const clockGrid = document.querySelector('.clock-grid');
+
+// Check local storage for timezone preference
+const savedTimezoneState = localStorage.getItem('timezoneVisible');
+if (savedTimezoneState === 'false') {
+    clockGrid.classList.add('hidden');
+    timezoneToggle.classList.add('active');
+}
+
+timezoneToggle.addEventListener('click', () => {
+    clockGrid.classList.toggle('hidden');
+    timezoneToggle.classList.toggle('active');
+
+    // Save preference
+    const isHidden = clockGrid.classList.contains('hidden');
+    localStorage.setItem('timezoneVisible', !isHidden);
+});

@@ -74,6 +74,29 @@ h1 {
     padding-bottom: 0.5rem;
 }
 
+#timezone-toggle {
+    background: none;
+    border: 2px solid var(--text-color);
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+}
+
+#timezone-toggle:hover {
+    background-color: var(--text-color);
+    color: var(--bg-color);
+}
+
+#timezone-toggle.active {
+    opacity: 0.5;
+}
+
 #theme-toggle {
     background: none;
     border: 2px solid var(--text-color);
@@ -111,6 +134,15 @@ body.light-theme .moon-icon {
     align-items: center;
     flex-grow: 1;
     pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.clock-grid.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
 }
 
 .clock-card {
@@ -245,6 +277,29 @@ h1 {
     padding-bottom: 0.5rem;
 }
 
+#timezone-toggle {
+    background: none;
+    border: 2px solid var(--text-color);
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+}
+
+#timezone-toggle:hover {
+    background-color: var(--text-color);
+    color: var(--bg-color);
+}
+
+#timezone-toggle.active {
+    opacity: 0.5;
+}
+
 #theme-toggle {
     background: none;
     border: 2px solid var(--text-color);
@@ -282,6 +337,15 @@ body.light-theme .moon-icon {
     align-items: center;
     flex-grow: 1;
     pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.clock-grid.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
 }
 
 .clock-card {
@@ -442,6 +506,29 @@ h1 {
     padding-bottom: 0.5rem;
 }
 
+#timezone-toggle {
+    background: none;
+    border: 2px solid var(--text-color);
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+}
+
+#timezone-toggle:hover {
+    background-color: var(--text-color);
+    color: var(--bg-color);
+}
+
+#timezone-toggle.active {
+    opacity: 0.5;
+}
+
 #theme-toggle {
     background: none;
     border: 2px solid var(--text-color);
@@ -479,6 +566,15 @@ body.light-theme .moon-icon {
     align-items: center;
     flex-grow: 1;
     pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.clock-grid.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
 }
 
 .clock-card {
@@ -675,6 +771,36 @@ body.light-theme input[type="range"] {
     position: fixed;
     bottom: 2rem;
     right: 2rem;
+    pointer-events: auto;
+    z-index: 100;
+}
+
+.camera-toggle-btn {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-color);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    pointer-events: auto;
+}
+
+.camera-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.camera-panel-content {
+    position: absolute;
+    bottom: 60px;
+    right: 0;
     background: var(--card-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -682,11 +808,20 @@ body.light-theme input[type="range"] {
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
     pointer-events: auto;
-    z-index: 100;
 }
 
-.camera-presets h3 {
+.camera-panel-content.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.camera-panel-content h3 {
     margin: 0 0 1rem 0;
     font-size: 1rem;
     font-weight: 600;

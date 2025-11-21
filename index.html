@@ -22,6 +22,14 @@
                     <label for="speed-control">Speed</label>
                     <input type="range" id="speed-control" min="0" max="5" step="0.1" value="1">
                 </div>
+                <button id="timezone-toggle" aria-label="Toggle Timezone Display">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </button>
                 <button id="theme-toggle" aria-label="Toggle Theme">
                     <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -94,16 +102,26 @@
 
         <!-- Camera Presets Panel -->
         <div id="camera-presets" class="camera-presets">
-            <h3>Camera Views</h3>
-            <div class="preset-buttons">
-                <button onclick="animateCameraTo('overview')" title="Press 1">Overview</button>
-                <button onclick="animateCameraTo('earth')" title="Press 2">Earth</button>
-                <button onclick="animateCameraTo('saturn')" title="Press 3">Saturn</button>
-                <button onclick="animateCameraTo('asteroidBelt')" title="Press 4">Asteroid Belt</button>
-                <button onclick="animateCameraTo('innerPlanets')" title="Press 5">Inner Planets</button>
-                <button onclick="animateCameraTo('outerPlanets')" title="Press 6">Outer Planets</button>
+            <button id="camera-toggle" class="camera-toggle-btn" aria-label="Toggle Camera Views">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+            </button>
+            <div id="camera-panel-content" class="camera-panel-content">
+                <h3>Camera Views</h3>
+                <div class="preset-buttons">
+                    <button onclick="animateCameraTo('overview')" title="Press 1">Overview</button>
+                    <button onclick="animateCameraTo('earth')" title="Press 2">Earth</button>
+                    <button onclick="animateCameraTo('saturn')" title="Press 3">Saturn</button>
+                    <button onclick="animateCameraTo('asteroidBelt')" title="Press 4">Asteroid Belt</button>
+                    <button onclick="animateCameraTo('innerPlanets')" title="Press 5">Inner Planets</button>
+                    <button onclick="animateCameraTo('outerPlanets')" title="Press 6">Outer Planets</button>
+                </div>
+                <p class="preset-hint">Use number keys 1-6 or R to reset</p>
             </div>
-            <p class="preset-hint">Use number keys 1-6 or R to reset</p>
         </div>
     </div>
 
