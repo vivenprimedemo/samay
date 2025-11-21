@@ -1,0 +1,277 @@
+// Three.js Scene Setup
+let scene, camera, renderer;
+let stars = [];
+let planets = [];
+let blackHole;
+let tick = 0;
+
+// Camera controls
+let cameraDistance = 1000;
+const minDistance = 300;
+const maxDistance = 3000;
+
+// Initialize Three.js
+function init() {
+    // Scene
+    scene = new THREE.Scene();
+
+    // Camera
+    camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        5000
+    );
+    camera.position.z = cameraDistance;
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({
+        canvas: document.getElementById('starfield'),
+        antialias: true,
+        alpha: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1, 0);
+    pointLight.position.set(500, 500, 500);
+    scene.add(pointLight);
+
+    // Create starfield
+    createStarfield();
+
+    // Create planets
+    createPlanets();
+
+    // Create black hole
+    createBlackHole();
+
+    // Event listeners
+    window.addEventListener('resize', onWindowResize);
+    window.addEventListener('wheel', onMouseWheel);
+
+    // Start animation
+    animate();
+}
+
+// Create 3D starfield
+function createStarfield() {
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 2000;
+    const positions = new Float32Array(starCount * 3);
+
+    for (let i = 0; i < starCount * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 4000;
+        positions[i + 1] = (Math.random() - 0.5) * 4000;
+        positions[i + 2] = (Math.random() - 0.5) * 4000;
+    }
+
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const starMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 2,
+        sizeAttenuation: true
+    });
+
+    const starField = new THREE.Points(starGeometry, starMaterial);
+    scene.add(starField);
+    stars.push(starField);
+}
+
+// Planet data
+const planetData = [
+    { name: 'Mercury', color: 0xA5A5A5, radius: 15, distance: 200, speed: 0.02 },
+    { name: 'Venus', color: 0xE3BB76, radius: 25, distance: 300, speed: 0.015 },
+    { name: 'Earth', color: 0x22A6B3, radius: 26, distance: 400, speed: 0.01 },
+    { name: 'Mars', color: 0xDD4C39, radius: 18, distance: 500, speed: 0.008 },
+    { name: 'Jupiter', color: 0xD9A066, radius: 60, distance: 700, speed: 0.005 },
+    { name: 'Saturn', color: 0xEAD6B8, radius: 50, distance: 900, speed: 0.004, hasRings: true },
+    { name: 'Uranus', color: 0xD1F7F8, radius: 35, distance: 1100, speed: 0.003 },
+    { name: 'Neptune', color: 0x4B70DD, radius: 34, distance: 1300, speed: 0.002 },
+    { name: 'Pluto', color: 0xE3D2B4, radius: 8, distance: 1500, speed: 0.001 }
+];
+
+// Create 3D planets
+function createPlanets() {
+    planetData.forEach((data, index) => {
+        // Planet sphere - high segment count for perfect spheres
+        const geometry = new THREE.SphereGeometry(data.radius, 64, 64);
+        const material = new THREE.MeshStandardMaterial({
+            color: data.color,
+            roughness: 0.8,
+            metalness: 0.1,
+            emissive: data.color,
+            emissiveIntensity: 0.05
+        });
+        const planet = new THREE.Mesh(geometry, material);
+
+        // Position in orbit
+        const angle = (index / planetData.length) * Math.PI * 2;
+        planet.position.x = Math.cos(angle) * data.distance;
+        planet.position.z = Math.sin(angle) * data.distance;
+        planet.position.y = (Math.random() - 0.5) * 100;
+
+        // Store data for animation
+        planet.userData = {
+            name: data.name,
+            distance: data.distance,
+            speed: data.speed,
+            angle: angle
+        };
+
+        scene.add(planet);
+        planets.push(planet);
+
+        // Add rings for Saturn
+        if (data.hasRings) {
+            const ringGeometry = new THREE.RingGeometry(data.radius * 1.5, data.radius * 2.5, 64);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: 0xC9B8A0,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.6
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.PI / 2;
+            planet.add(ring);
+        }
+
+        // Add text label
+        createTextLabel(planet, data.name);
+    });
+}
+
+// Create text labels for planets
+function createTextLabel(planet, text) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 64;
+
+    context.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    context.font = 'Bold 24px Outfit, Arial';
+    context.textAlign = 'center';
+    context.fillText(text, 128, 40);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    event.preventDefault();
+
+    cameraDistance += event.deltaY * 0.5;
+    cameraDistance = Math.max(minDistance, Math.min(maxDistance, cameraDistance));
+
+    camera.position.z = cameraDistance;
+}
+
+// Window resize
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    tick += 0.01;
+
+    // Rotate planets in orbit
+    planets.forEach(planet => {
+        planet.userData.angle += planet.userData.speed;
+        planet.position.x = Math.cos(planet.userData.angle) * planet.userData.distance;
+        planet.position.z = Math.sin(planet.userData.angle) * planet.userData.distance;
+
+        // Rotate planet on its axis
+        planet.rotation.y += 0.01;
+    });
+
+    // Rotate black hole components
+    if (blackHole) {
+        // Rotate photon ring
+        blackHole.children[2].rotation.z += 0.01;
+        // Rotate accretion disk particles
+        blackHole.children[3].rotation.y += 0.005;
+    }
+
+    // Rotate starfield slowly
+    if (stars[0]) {
+        stars[0].rotation.y += 0.0001;
+    }
+
+    renderer.render(scene, camera);
+}
+
+// Initialize when DOM is ready
+init();
+
+// Clock Logic
+function updateClocks() {
+    const now = new Date();
+
+    const options = {
+        hour12: true,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
+
+    const dateOptions = {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+    };
+
+    // India (IST)
+    const indiaTime = now.toLocaleTimeString('en-US', { ...options, timeZone: 'Asia/Kolkata' });
+    const indiaDate = now.toLocaleDateString('en-US', { ...dateOptions, timeZone: 'Asia/Kolkata' });
+    document.getElementById('time-india').textContent = indiaTime;
+    document.getElementById('date-india').textContent = indiaDate;
+
+    // New York (EST/EDT)
+    const nyTime = now.toLocaleTimeString('en-US', { ...options, timeZone: 'America/New_York' });
+    const nyDate = now.toLocaleDateString('en-US', { ...dateOptions, timeZone: 'America/New_York' });
+    document.getElementById('time-ny').textContent = nyTime;
+    document.getElementById('date-ny').textContent = nyDate;
+
+    // Los Angeles (PST/PDT)
+    const laTime = now.toLocaleTimeString('en-US', { ...options, timeZone: 'America/Los_Angeles' });
+    const laDate = now.toLocaleDateString('en-US', { ...dateOptions, timeZone: 'America/Los_Angeles' });
+    document.getElementById('time-la').textContent = laTime;
+    document.getElementById('date-la').textContent = laDate;
+
+    // UTC
+    const utcTime = now.toLocaleTimeString('en-US', { ...options, timeZone: 'UTC' });
+    const utcDate = now.toLocaleDateString('en-US', { ...dateOptions, timeZone: 'UTC' });
+    document.getElementById('time-utc').textContent = utcTime;
+    document.getElementById('date-utc').textContent = utcDate;
+}
+
+setInterval(updateClocks, 1000);
+updateClocks();
+
+// Theme Toggle
+const themeToggle = document.getElementById('theme-toggle');
+const body = document.body;
+
+// Check local storage
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+    body.className = savedTheme;
+}
+
+themeToggle.addEventListener('click', () => {
+    if (body.classList.contains('dark-theme')) {
+        body.classList.replace('dark-theme', 'light-theme');
+        localStorage.setItem('theme', 'light-theme');
+    } else {
+        body.classList.replace('light-theme', 'dark-theme');
+        localStorage.setItem('theme', 'dark-theme');
+    }
+});

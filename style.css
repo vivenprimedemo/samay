@@ -1,0 +1,177 @@
+:root {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.1);
+    --card-border: rgba(255, 255, 255, 0.3);
+    --card-shadow: 0 8px 32px 0 rgba(255, 255, 255, 0.1);
+    --accent-color: #ffffff;
+    --star-color: #ffffff;
+}
+
+body.light-theme {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --card-bg: rgba(0, 0, 0, 0.05);
+    --card-border: rgba(0, 0, 0, 0.2);
+    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    --accent-color: #000000;
+    --star-color: #000000;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    height: 100vh;
+    width: 100vw;
+}
+
+#starfield {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4rem;
+}
+
+h1 {
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: 1px;
+    /* Removed gradient, kept solid color for strict B&W */
+    color: var(--text-color);
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--text-color);
+    padding-bottom: 0.5rem;
+}
+
+#theme-toggle {
+    background: none;
+    border: 2px solid var(--text-color);
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#theme-toggle:hover {
+    background-color: var(--text-color);
+    color: var(--bg-color);
+}
+
+.sun-icon {
+    display: none;
+}
+
+body.light-theme .sun-icon {
+    display: block;
+}
+
+body.light-theme .moon-icon {
+    display: none;
+}
+
+.clock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.clock-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(5px);
+    /* Reduced blur for sharper look */
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid var(--card-border);
+    border-radius: 0;
+    /* Sharper edges for B&W aesthetic */
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.clock-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(128, 128, 128, 0.2);
+    border-color: var(--text-color);
+}
+
+.clock-card h2 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    opacity: 1;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 0.5rem;
+}
+
+.time {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+}
+
+.date {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.clock-card.highlight {
+    border: 2px solid var(--text-color);
+    background: var(--text-color);
+    color: var(--bg-color);
+}
+
+.clock-card.highlight h2 {
+    border-bottom-color: var(--bg-color);
+}
+
+@media (max-width: 768px) {
+    .time {
+        font-size: 2rem;
+    }
+
+    header {
+        margin-bottom: 2rem;
+    }
+}
