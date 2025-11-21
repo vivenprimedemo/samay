@@ -245,7 +245,8 @@ function createSun() {
     sunGroup = new THREE.Group();
 
     // Far outer corona (very subtle)
-    const coronaGeometry = new THREE.SphereGeometry(130, 64, 64);
+    const coronaGeometry = new THREE.SphereGeometry(130, 128, 128);
+    coronaGeometry.computeVertexNormals();
     const coronaMaterial = new THREE.MeshBasicMaterial({
         color: 0xff8800,
         transparent: true,
@@ -257,7 +258,8 @@ function createSun() {
     sunGroup.add(corona);
 
     // Outer glow (enhanced)
-    const outerGlowGeometry = new THREE.SphereGeometry(100, 64, 64);
+    const outerGlowGeometry = new THREE.SphereGeometry(100, 128, 128);
+    outerGlowGeometry.computeVertexNormals();
     const outerGlowMaterial = new THREE.MeshBasicMaterial({
         color: 0xffaa00,
         transparent: true,
@@ -269,7 +271,8 @@ function createSun() {
     sunGroup.add(outerGlow);
 
     // Middle glow (brighter)
-    const midGlowGeometry = new THREE.SphereGeometry(70, 64, 64);
+    const midGlowGeometry = new THREE.SphereGeometry(70, 128, 128);
+    midGlowGeometry.computeVertexNormals();
     const midGlowMaterial = new THREE.MeshBasicMaterial({
         color: 0xffcc00,
         transparent: true,
@@ -281,7 +284,8 @@ function createSun() {
     sunGroup.add(midGlow);
 
     // Inner glow (bright)
-    const innerGlowGeometry = new THREE.SphereGeometry(55, 64, 64);
+    const innerGlowGeometry = new THREE.SphereGeometry(55, 128, 128);
+    innerGlowGeometry.computeVertexNormals();
     const innerGlowMaterial = new THREE.MeshBasicMaterial({
         color: 0xffee00,
         transparent: true,
@@ -293,7 +297,8 @@ function createSun() {
     sunGroup.add(innerGlow);
 
     // Sun sphere (core) with realistic texture
-    const sunGeometry = new THREE.SphereGeometry(50, 64, 64);
+    const sunGeometry = new THREE.SphereGeometry(50, 128, 128);
+    sunGeometry.computeVertexNormals(); // Ensure smooth shading
     const sunTexture = loadTextureWithFiltering(planetTextures.sun);
     const sunMaterial = new THREE.MeshBasicMaterial({
         map: sunTexture,
@@ -329,8 +334,9 @@ function createSun() {
 // Create 3D planets
 function createPlanets() {
     planetData.forEach((data, index) => {
-        // Planet sphere
-        const geometry = new THREE.SphereGeometry(data.radius, 64, 64);
+        // Planet sphere with ultra-smooth geometry (high segment count)
+        const geometry = new THREE.SphereGeometry(data.radius, 128, 128);
+        geometry.computeVertexNormals(); // Ensure smooth shading
 
         // Get texture URL based on planet name
         const textureKey = data.name.toLowerCase();
@@ -371,7 +377,8 @@ function createPlanets() {
             });
 
             // Add clouds layer (slightly larger sphere)
-            const cloudsGeometry = new THREE.SphereGeometry(data.radius * 1.01, 64, 64);
+            const cloudsGeometry = new THREE.SphereGeometry(data.radius * 1.01, 128, 128);
+            cloudsGeometry.computeVertexNormals(); // Ensure smooth shading
             const cloudsMaterial = new THREE.MeshStandardMaterial({
                 map: cloudTexture,
                 transparent: true,
@@ -672,7 +679,8 @@ function createAsteroidBelt() {
 
 // Create Earth's moon
 function createMoon() {
-    const moonGeometry = new THREE.SphereGeometry(7, 32, 32);
+    const moonGeometry = new THREE.SphereGeometry(7, 128, 128);
+    moonGeometry.computeVertexNormals(); // Ensure smooth shading
     const moonTexture = loadTextureWithFiltering(planetTextures.moon);
     const moonMaterial = new THREE.MeshStandardMaterial({
         map: moonTexture,
