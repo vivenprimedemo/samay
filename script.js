@@ -241,58 +241,6 @@ let sunGroup; // Make it accessible for animations
 function createSun() {
     sunGroup = new THREE.Group();
 
-    // Far outer corona (very subtle)
-    const coronaGeometry = new THREE.SphereGeometry(130, 128, 128);
-    coronaGeometry.computeVertexNormals();
-    const coronaMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff8800,
-        transparent: true,
-        opacity: 0.05,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending
-    });
-    const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
-    sunGroup.add(corona);
-
-    // Outer glow (enhanced)
-    const outerGlowGeometry = new THREE.SphereGeometry(100, 128, 128);
-    outerGlowGeometry.computeVertexNormals();
-    const outerGlowMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffaa00,
-        transparent: true,
-        opacity: 0.15,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending
-    });
-    const outerGlow = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
-    sunGroup.add(outerGlow);
-
-    // Middle glow (brighter)
-    const midGlowGeometry = new THREE.SphereGeometry(70, 128, 128);
-    midGlowGeometry.computeVertexNormals();
-    const midGlowMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffcc00,
-        transparent: true,
-        opacity: 0.3,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending
-    });
-    const midGlow = new THREE.Mesh(midGlowGeometry, midGlowMaterial);
-    sunGroup.add(midGlow);
-
-    // Inner glow (bright)
-    const innerGlowGeometry = new THREE.SphereGeometry(55, 128, 128);
-    innerGlowGeometry.computeVertexNormals();
-    const innerGlowMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffee00,
-        transparent: true,
-        opacity: 0.4,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending
-    });
-    const innerGlow = new THREE.Mesh(innerGlowGeometry, innerGlowMaterial);
-    sunGroup.add(innerGlow);
-
     // Sun sphere (core) with realistic texture
     const sunGeometry = new THREE.SphereGeometry(50, 128, 128);
     sunGeometry.computeVertexNormals(); // Ensure smooth shading
@@ -305,27 +253,10 @@ function createSun() {
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     sunGroup.add(sun);
 
-    // Store glow layers for animation
-    sunGroup.userData.glowLayers = [corona, outerGlow, midGlow, innerGlow];
-
     // Position at center
     sunGroup.position.set(0, 0, 0);
 
     scene.add(sunGroup);
-
-    // Add orbital path lines for each planet
-    planetData.forEach(data => {
-        const orbitGeometry = new THREE.RingGeometry(data.distance - 0.5, data.distance + 0.5, 128);
-        const orbitMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.5,
-            side: THREE.DoubleSide
-        });
-        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
-        orbit.rotation.x = Math.PI / 2;
-        scene.add(orbit);
-    });
 }
 
 // Create 3D planets
@@ -1383,17 +1314,6 @@ function animate() {
     requestAnimationFrame(animate);
 
     tick += 0.01;
-
-    // Animate sun glow (pulsing effect)
-    if (sunGroup && sunGroup.userData.glowLayers) {
-        const pulseSpeed = 0.5;
-        const pulseAmount = 0.05;
-        sunGroup.userData.glowLayers.forEach((layer, index) => {
-            const baseOpacity = [0.05, 0.15, 0.3, 0.4][index];
-            const pulse = Math.sin(tick * pulseSpeed + index * 0.5) * pulseAmount;
-            layer.material.opacity = baseOpacity + pulse;
-        });
-    }
 
     // Rotate planets in orbit
     planets.forEach(planet => {
