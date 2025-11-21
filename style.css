@@ -670,3 +670,73 @@ input[type="range"]::-webkit-slider-thumb:hover {
 body.light-theme input[type="range"] {
     background: rgba(0, 0, 0, 0.3);
 }
+/* Camera Presets Panel */
+.camera-presets {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 200px;
+    pointer-events: auto;
+    z-index: 100;
+}
+
+.camera-presets h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.preset-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.preset-buttons button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+    pointer-events: auto;
+}
+
+.preset-buttons button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-2px);
+}
+
+.preset-hint {
+    margin: 1rem 0 0 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+body.light-theme .camera-presets {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .preset-buttons button {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .preset-buttons button:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .preset-hint {
+    color: rgba(0, 0, 0, 0.5);
+}

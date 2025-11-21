@@ -91,6 +91,20 @@
                 <p id="panel-desc" class="panel-desc">Description goes here...</p>
             </div>
         </div>
+
+        <!-- Camera Presets Panel -->
+        <div id="camera-presets" class="camera-presets">
+            <h3>Camera Views</h3>
+            <div class="preset-buttons">
+                <button onclick="animateCameraTo('overview')" title="Press 1">Overview</button>
+                <button onclick="animateCameraTo('earth')" title="Press 2">Earth</button>
+                <button onclick="animateCameraTo('saturn')" title="Press 3">Saturn</button>
+                <button onclick="animateCameraTo('asteroidBelt')" title="Press 4">Asteroid Belt</button>
+                <button onclick="animateCameraTo('innerPlanets')" title="Press 5">Inner Planets</button>
+                <button onclick="animateCameraTo('outerPlanets')" title="Press 6">Outer Planets</button>
+            </div>
+            <p class="preset-hint">Use number keys 1-6 or R to reset</p>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

@@ -20,10 +20,29 @@ let lensFlare = null;
 let tick = 0;
 let controls = null;
 
+// Motion trails
+let trails = {
+    iss: { line: null, positions: [], maxPoints: 80 },
+    spaceships: [],
+    comet: { line: null, positions: [], maxPoints: 100 },
+    meteors: []
+};
+
 // Camera controls
 let cameraDistance = 1200;
 const minDistance = 300;
 const maxDistance = 3000;
+let cameraAnimating = false;
+
+// Camera presets
+const cameraPresets = {
+    overview: { position: { x: 0, y: 1200, z: 0 }, target: { x: 0, y: 0, z: 0 } },
+    earth: { position: { x: 400, y: 300, z: 400 }, target: { x: 400, y: 0, z: 400 } },
+    saturn: { position: { x: 900, y: 400, z: 900 }, target: { x: 900, y: 0, z: 900 } },
+    asteroidBelt: { position: { x: 600, y: 800, z: 0 }, target: { x: 600, y: 0, z: 0 } },
+    innerPlanets: { position: { x: 0, y: 600, z: 600 }, target: { x: 0, y: 0, z: 300 } },
+    outerPlanets: { position: { x: -1200, y: 800, z: 800 }, target: { x: -1200, y: 0, z: 1200 } }
+};
 
 // Initialize Three.js
 function init() {
@@ -60,13 +79,26 @@ function init() {
     controls.rotateSpeed = 0.5;
     controls.target.set(0, 0, 0);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    // Enhanced Lighting System
+    // Ambient light (subtle base lighting)
+    const ambientLight = new THREE.AmbientLight(0x404060, 0.2);
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xffffff, 1, 0);
-    pointLight.position.set(0, 500, 0);
-    scene.add(pointLight);
+    // Hemisphere light (simulates space lighting)
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.4);
+    hemiLight.position.set(0, 1000, 0);
+    scene.add(hemiLight);
+
+    // Main sun point light (strong, from center)
+    const sunLight = new THREE.PointLight(0xffee88, 2, 3000);
+    sunLight.position.set(0, 0, 0);
+    sunLight.castShadow = false; // Disable for performance
+    scene.add(sunLight);
+
+    // Secondary fill light (softer, for planet visibility)
+    const fillLight = new THREE.PointLight(0xffffff, 0.5, 2500);
+    fillLight.position.set(500, 500, 500);
+    scene.add(fillLight);
 
     // Create starfield
     createStarfield();
@@ -119,9 +151,23 @@ function init() {
     // Init Controls
     initControls();
 
+    // Initialize motion trails
+    trails.iss.line = createTrail(0x88ccff, trails.iss.maxPoints);
+    trails.comet.line = createTrail(0x00ffff, trails.comet.maxPoints);
+
+    // Initialize spaceship trails
+    spaceships.forEach(() => {
+        trails.spaceships.push({
+            line: createTrail(0xff8844, 60),
+            positions: [],
+            maxPoints: 60
+        });
+    });
+
     // Event listeners
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('click', onPlanetClick);
+    window.addEventListener('keydown', onKeyDown);
 
     // Start animation
     animate();
@@ -166,40 +212,70 @@ const planetData = [
 ];
 
 // Create Sun at center
+let sunGroup; // Make it accessible for animations
 function createSun() {
-    const sunGroup = new THREE.Group();
+    sunGroup = new THREE.Group();
 
-    // Outer glow
+    // Far outer corona (very subtle)
+    const coronaGeometry = new THREE.SphereGeometry(130, 64, 64);
+    const coronaMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff8800,
+        transparent: true,
+        opacity: 0.05,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending
+    });
+    const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+    sunGroup.add(corona);
+
+    // Outer glow (enhanced)
     const outerGlowGeometry = new THREE.SphereGeometry(100, 64, 64);
     const outerGlowMaterial = new THREE.MeshBasicMaterial({
         color: 0xffaa00,
         transparent: true,
-        opacity: 0.1,
-        side: THREE.BackSide
+        opacity: 0.15,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending
     });
     const outerGlow = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
     sunGroup.add(outerGlow);
 
-    // Middle glow
+    // Middle glow (brighter)
     const midGlowGeometry = new THREE.SphereGeometry(70, 64, 64);
     const midGlowMaterial = new THREE.MeshBasicMaterial({
         color: 0xffcc00,
         transparent: true,
-        opacity: 0.2,
-        side: THREE.BackSide
+        opacity: 0.3,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending
     });
     const midGlow = new THREE.Mesh(midGlowGeometry, midGlowMaterial);
     sunGroup.add(midGlow);
 
-    // Sun sphere
+    // Inner glow (bright)
+    const innerGlowGeometry = new THREE.SphereGeometry(55, 64, 64);
+    const innerGlowMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffee00,
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending
+    });
+    const innerGlow = new THREE.Mesh(innerGlowGeometry, innerGlowMaterial);
+    sunGroup.add(innerGlow);
+
+    // Sun sphere (core)
     const sunGeometry = new THREE.SphereGeometry(50, 64, 64);
     const sunMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffdd00,
-        emissive: 0xffdd00,
+        color: 0xffff00,
+        emissive: 0xffff00,
         emissiveIntensity: 1
     });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     sunGroup.add(sun);
+
+    // Store glow layers for animation
+    sunGroup.userData.glowLayers = [corona, outerGlow, midGlow, innerGlow];
 
     // Position at center
     sunGroup.position.set(0, 0, 0);
@@ -226,12 +302,14 @@ function createPlanets() {
     planetData.forEach((data, index) => {
         // Planet sphere
         const geometry = new THREE.SphereGeometry(data.radius, 64, 64);
+
+        // Enhanced material properties for better visuals
         const material = new THREE.MeshStandardMaterial({
             color: data.color,
-            roughness: 0.8,
-            metalness: 0.1,
+            roughness: data.name === 'Jupiter' || data.name === 'Saturn' ? 0.7 : 0.9,
+            metalness: data.name === 'Mercury' ? 0.3 : 0.05,
             emissive: data.color,
-            emissiveIntensity: 0.05
+            emissiveIntensity: data.name === 'Venus' ? 0.15 : 0.08
         });
         const planet = new THREE.Mesh(geometry, material);
 
@@ -252,18 +330,46 @@ function createPlanets() {
         scene.add(planet);
         planets.push(planet);
 
-        // Add rings for Saturn
+        // Add enhanced rings for Saturn
         if (data.hasRings) {
-            const ringGeometry = new THREE.RingGeometry(data.radius * 1.5, data.radius * 2.5, 64);
-            const ringMaterial = new THREE.MeshBasicMaterial({
+            // Inner ring (brighter)
+            const innerRing = new THREE.RingGeometry(data.radius * 1.2, data.radius * 1.8, 128);
+            const innerRingMaterial = new THREE.MeshBasicMaterial({
+                color: 0xE8D4B5,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8
+            });
+            const innerRingMesh = new THREE.Mesh(innerRing, innerRingMaterial);
+            innerRingMesh.rotation.x = Math.PI / 2;
+            planet.add(innerRingMesh);
+
+            // Cassini Division (dark gap)
+            const gapRing = new THREE.RingGeometry(data.radius * 1.8, data.radius * 1.95, 128);
+            const gapRingMaterial = new THREE.MeshBasicMaterial({
+                color: 0x8B7355,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.3
+            });
+            const gapRingMesh = new THREE.Mesh(gapRing, gapRingMaterial);
+            gapRingMesh.rotation.x = Math.PI / 2;
+            planet.add(gapRingMesh);
+
+            // Outer ring (fading)
+            const outerRing = new THREE.RingGeometry(data.radius * 1.95, data.radius * 2.6, 128);
+            const outerRingMaterial = new THREE.MeshBasicMaterial({
                 color: 0xC9B8A0,
                 side: THREE.DoubleSide,
                 transparent: true,
-                opacity: 0.6
+                opacity: 0.5
             });
-            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            ring.rotation.x = Math.PI / 2;
-            planet.add(ring);
+            const outerRingMesh = new THREE.Mesh(outerRing, outerRingMaterial);
+            outerRingMesh.rotation.x = Math.PI / 2;
+            planet.add(outerRingMesh);
+
+            // Store rings for animation
+            planet.userData.rings = [innerRingMesh, gapRingMesh, outerRingMesh];
         }
 
         // Add text label
@@ -602,7 +708,7 @@ function createMeteor() {
     meteors.push(meteor);
 }
 
-// Click to focus on planet
+// Click to focus on any object
 function onPlanetClick(event) {
     const mouse = new THREE.Vector2();
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -611,27 +717,43 @@ function onPlanetClick(event) {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
 
-    const intersects = raycaster.intersectObjects(planets);
+    // Check all clickable objects
+    const clickableObjects = [
+        ...planets,
+        ...(iss ? [iss] : []),
+        ...(moon ? [moon] : []),
+        ...(comet ? [comet] : []),
+        ...satellites,
+        ...spaceships
+    ];
 
+    const intersects = raycaster.intersectObjects(clickableObjects, true);
 
     if (intersects.length > 0) {
-        focusedPlanet = intersects[0].object;
+        // Find the top-level object
+        let clickedObject = intersects[0].object;
+        while (clickedObject.parent && !clickableObjects.includes(clickedObject)) {
+            clickedObject = clickedObject.parent;
+        }
+
+        focusedPlanet = clickedObject;
 
         // Show info panel
         const panel = document.getElementById('planet-info-panel');
-        const name = focusedPlanet.userData.name;
+        const name = clickedObject.userData.name || getObjectName(clickedObject);
+        const objectInfo = getObjectInfo(clickedObject, name);
 
-        if (planetInfoData[name]) {
-            document.getElementById('panel-title').textContent = name;
-            document.getElementById('panel-type').textContent = planetInfoData[name].type;
-            document.getElementById('panel-distance').textContent = planetInfoData[name].distance;
-            document.getElementById('panel-diameter').textContent = planetInfoData[name].diameter;
-            document.getElementById('panel-desc').textContent = planetInfoData[name].desc;
+        if (objectInfo) {
+            document.getElementById('panel-title').textContent = objectInfo.title;
+            document.getElementById('panel-type').textContent = objectInfo.type;
+            document.getElementById('panel-distance').textContent = objectInfo.distance;
+            document.getElementById('panel-diameter').textContent = objectInfo.diameter;
+            document.getElementById('panel-desc').textContent = objectInfo.desc;
 
             panel.classList.remove('hidden');
 
-            // Update OrbitControls target to focused planet
-            controls.target.set(focusedPlanet.position.x, 0, focusedPlanet.position.z);
+            // Update OrbitControls target to focused object
+            controls.target.set(clickedObject.position.x, 0, clickedObject.position.z);
         }
 
     } else if (focusedPlanet) {
@@ -640,7 +762,137 @@ function onPlanetClick(event) {
         controls.target.set(0, 0, 0);
         document.getElementById('planet-info-panel').classList.add('hidden');
     }
+}
 
+// Helper function to identify object type
+function getObjectName(obj) {
+    if (obj === iss) return 'ISS';
+    if (obj === moon) return 'Moon';
+    if (obj === comet) return 'Comet';
+    if (satellites.includes(obj)) return 'Satellite';
+    if (spaceships.includes(obj)) return 'Spaceship';
+    return 'Unknown';
+}
+
+// Get info for any object
+function getObjectInfo(obj, name) {
+    // Check if it's a planet
+    if (planetInfoData[name]) {
+        return {
+            title: name,
+            type: planetInfoData[name].type,
+            distance: planetInfoData[name].distance,
+            diameter: planetInfoData[name].diameter,
+            desc: planetInfoData[name].desc
+        };
+    }
+
+    // ISS
+    if (obj === iss) {
+        return {
+            title: 'International Space Station',
+            type: 'Space Station',
+            distance: 'Orbits Earth at ~420 km',
+            diameter: '109m × 73m',
+            desc: 'The ISS orbits Earth 16 times per day at 28,000 km/h. Home to astronauts conducting scientific research in microgravity.'
+        };
+    }
+
+    // Moon
+    if (obj === moon) {
+        return {
+            title: 'The Moon',
+            type: 'Natural Satellite',
+            distance: '384,400 km from Earth',
+            diameter: '3,474 km',
+            desc: 'Earth\'s only natural satellite. It takes 27.3 days to orbit Earth and is the fifth largest moon in our solar system.'
+        };
+    }
+
+    // Comet
+    if (obj === comet) {
+        return {
+            title: 'Comet',
+            type: 'Icy Body',
+            distance: 'Elliptical orbit',
+            diameter: '~10 km nucleus',
+            desc: 'A cosmic snowball of frozen gases, rock and dust. When near the Sun, it heats up and releases gases, forming a glowing tail.'
+        };
+    }
+
+    // Satellite
+    if (satellites.includes(obj)) {
+        const index = satellites.indexOf(obj) + 1;
+        return {
+            title: `Artificial Satellite ${index}`,
+            type: 'Communications Satellite',
+            distance: `Orbit: ${Math.round(obj.userData.distance)} units`,
+            diameter: '~10m with solar panels',
+            desc: 'Part of a global network providing GPS, telecommunications, weather monitoring, and Earth observation services.'
+        };
+    }
+
+    // Spaceship
+    if (spaceships.includes(obj)) {
+        const index = spaceships.indexOf(obj);
+        const types = ['Deep Space Explorer', 'Cargo Shuttle'];
+        return {
+            title: types[index] || 'Spaceship',
+            type: 'Spacecraft',
+            distance: `Currently at ${Math.round(obj.userData.distance)} units`,
+            diameter: '~15m',
+            desc: index === 0 ?
+                'On a mission to explore the outer solar system and study distant planets and asteroids.' :
+                'Transporting supplies and equipment between Earth and orbital stations.'
+        };
+    }
+
+    return null;
+}
+
+// Camera Animation System
+function animateCameraTo(preset) {
+    if (cameraAnimating) return;
+
+    const targetPos = cameraPresets[preset].position;
+    const targetLookAt = cameraPresets[preset].target;
+
+    cameraAnimating = true;
+    const startPos = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const duration = 2000; // 2 seconds
+    const startTime = Date.now();
+
+    function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function animate() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeInOutCubic(progress);
+
+        // Interpolate camera position
+        camera.position.x = startPos.x + (targetPos.x - startPos.x) * eased;
+        camera.position.y = startPos.y + (targetPos.y - startPos.y) * eased;
+        camera.position.z = startPos.z + (targetPos.z - startPos.z) * eased;
+
+        // Interpolate target
+        controls.target.x = startTarget.x + (targetLookAt.x - startTarget.x) * eased;
+        controls.target.y = startTarget.y + (targetLookAt.y - startTarget.y) * eased;
+        controls.target.z = startTarget.z + (targetLookAt.z - startTarget.z) * eased;
+
+        controls.update();
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            cameraAnimating = false;
+            focusedPlanet = null; // Clear focused planet when using presets
+        }
+    }
+
+    animate();
 }
 
 
@@ -810,6 +1062,58 @@ function initControls() {
     }
 }
 
+// Motion Trail Functions
+function createTrail(color, maxPoints) {
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(maxPoints * 3);
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const material = new THREE.LineBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.6,
+        linewidth: 2
+    });
+
+    const line = new THREE.Line(geometry, material);
+    line.frustumCulled = false;
+    scene.add(line);
+
+    return line;
+}
+
+function updateTrail(trail, newPosition) {
+    // Add new position
+    trail.positions.push(newPosition.clone());
+
+    // Remove old positions if exceeding max
+    if (trail.positions.length > trail.maxPoints) {
+        trail.positions.shift();
+    }
+
+    // Update line geometry
+    if (trail.line && trail.positions.length > 1) {
+        const positions = trail.line.geometry.attributes.position.array;
+
+        for (let i = 0; i < trail.positions.length; i++) {
+            positions[i * 3] = trail.positions[i].x;
+            positions[i * 3 + 1] = trail.positions[i].y;
+            positions[i * 3 + 2] = trail.positions[i].z;
+        }
+
+        // Fill remaining with last position to avoid artifacts
+        const lastPos = trail.positions[trail.positions.length - 1];
+        for (let i = trail.positions.length; i < trail.maxPoints; i++) {
+            positions[i * 3] = lastPos.x;
+            positions[i * 3 + 1] = lastPos.y;
+            positions[i * 3 + 2] = lastPos.z;
+        }
+
+        trail.line.geometry.attributes.position.needsUpdate = true;
+        trail.line.geometry.setDrawRange(0, trail.positions.length);
+    }
+}
+
 // Create Wormhole
 function createWormhole() {
     const wormholeGroup = new THREE.Group();
@@ -968,11 +1272,50 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// Keyboard shortcuts
+function onKeyDown(event) {
+    switch (event.key) {
+        case '1':
+            animateCameraTo('overview');
+            break;
+        case '2':
+            animateCameraTo('earth');
+            break;
+        case '3':
+            animateCameraTo('saturn');
+            break;
+        case '4':
+            animateCameraTo('asteroidBelt');
+            break;
+        case '5':
+            animateCameraTo('innerPlanets');
+            break;
+        case '6':
+            animateCameraTo('outerPlanets');
+            break;
+        case 'r':
+        case 'R':
+            animateCameraTo('overview');
+            break;
+    }
+}
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
 
     tick += 0.01;
+
+    // Animate sun glow (pulsing effect)
+    if (sunGroup && sunGroup.userData.glowLayers) {
+        const pulseSpeed = 0.5;
+        const pulseAmount = 0.05;
+        sunGroup.userData.glowLayers.forEach((layer, index) => {
+            const baseOpacity = [0.05, 0.15, 0.3, 0.4][index];
+            const pulse = Math.sin(tick * pulseSpeed + index * 0.5) * pulseAmount;
+            layer.material.opacity = baseOpacity + pulse;
+        });
+    }
 
     // Rotate planets in orbit
     planets.forEach(planet => {
@@ -982,6 +1325,13 @@ function animate() {
 
         // Rotate planet on its axis
         planet.rotation.y += 0.01 * timeScale;
+
+        // Animate Saturn's rings (subtle rotation)
+        if (planet.userData.rings) {
+            planet.userData.rings.forEach((ring, index) => {
+                ring.rotation.z += (0.0001 + index * 0.00005) * timeScale;
+            });
+        }
     });
     // Animate satellites
     satellites.forEach(satellite => {
@@ -994,7 +1344,7 @@ function animate() {
     });
 
     // Animate spaceships
-    spaceships.forEach(ship => {
+    spaceships.forEach((ship, index) => {
         ship.userData.angle += ship.userData.speed * timeScale;
         ship.position.x = Math.cos(ship.userData.angle) * ship.userData.distance;
         ship.position.z = Math.sin(ship.userData.angle) * ship.userData.distance;
@@ -1007,6 +1357,11 @@ function animate() {
 
         // Point ship in direction of movement
         ship.rotation.y = ship.userData.angle + Math.PI / 2;
+
+        // Update motion trail
+        if (trails.spaceships[index]) {
+            updateTrail(trails.spaceships[index], ship.position);
+        }
     });
 
 
@@ -1033,6 +1388,9 @@ function animate() {
 
         // Rotate to face earth
         iss.lookAt(earth.position);
+
+        // Update ISS motion trail
+        updateTrail(trails.iss, iss.position);
     }
     // Animate Earth's moon
     if (moon && planets[2]) { // Earth is index 2
@@ -1056,6 +1414,9 @@ function animate() {
 
         // Point comet in direction of movement
         comet.rotation.y = comet.userData.angle + Math.PI / 2;
+
+        // Update comet motion trail
+        updateTrail(trails.comet, comet.position);
     }
 
     // Animate meteors
