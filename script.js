@@ -18,6 +18,7 @@ let wormhole = null;
 let ufos = [];
 let lensFlare = null;
 let tick = 0;
+let controls = null;
 
 // Camera controls
 let cameraDistance = 1200;
@@ -47,6 +48,17 @@ function init() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+
+    // OrbitControls for interactive camera movement (must be after renderer)
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = minDistance;
+    controls.maxDistance = maxDistance;
+    controls.enablePan = true;
+    controls.panSpeed = 1.0;
+    controls.rotateSpeed = 0.5;
+    controls.target.set(0, 0, 0);
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
@@ -109,7 +121,6 @@ function init() {
 
     // Event listeners
     window.addEventListener('resize', onWindowResize);
-    window.addEventListener('wheel', onMouseWheel, { passive: false });
     window.addEventListener('click', onPlanetClick);
 
     // Start animation
@@ -619,15 +630,14 @@ function onPlanetClick(event) {
 
             panel.classList.remove('hidden');
 
-            // Zoom in when focused
-            cameraDistance = 300;
+            // Update OrbitControls target to focused planet
+            controls.target.set(focusedPlanet.position.x, 0, focusedPlanet.position.z);
         }
 
     } else if (focusedPlanet) {
         // Click empty space to unfocus
         focusedPlanet = null;
-        cameraDistance = 1200;
-        cameraTarget = { x: 0, y: cameraDistance, z: 0 };
+        controls.target.set(0, 0, 0);
         document.getElementById('planet-info-panel').classList.add('hidden');
     }
 
@@ -652,7 +662,7 @@ function initPlanetData() {
     document.getElementById('close-panel').addEventListener('click', () => {
         document.getElementById('planet-info-panel').classList.add('hidden');
         focusedPlanet = null;
-        cameraTarget = { x: 0, y: 1200, z: 0 };
+        controls.target.set(0, 0, 0);
     });
 }
 
@@ -951,17 +961,6 @@ function createLensFlare() {
     lensFlare.scale.set(200, 200, 1);
     scene.add(lensFlare);
 }
-// Mouse wheel zoom
-function onMouseWheel(event) {
-    event.preventDefault();
-
-    cameraDistance += event.deltaY * 0.5;
-    cameraDistance = Math.max(minDistance, Math.min(maxDistance, cameraDistance));
-
-    // Update target immediately for responsiveness
-    cameraTarget.y = cameraDistance;
-}
-
 // Window resize
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -1127,23 +1126,13 @@ function animate() {
         let opacity = Math.max(0, 1 - (angle / 1.5));
         lensFlare.material.opacity = opacity * 0.8;
     }
-    // Camera follow focused planet
+    // Update OrbitControls target to follow focused planet
     if (focusedPlanet) {
-        cameraTarget.x = focusedPlanet.position.x;
-        cameraTarget.z = focusedPlanet.position.z;
-        cameraTarget.y = cameraDistance;
-    } else {
-        // Overview mode
-        cameraTarget.x = 0;
-        cameraTarget.z = 0;
-        cameraTarget.y = cameraDistance;
+        controls.target.set(focusedPlanet.position.x, 0, focusedPlanet.position.z);
     }
 
-    // Smooth camera movement
-    camera.position.x += (cameraTarget.x - camera.position.x) * 0.05;
-    camera.position.y += (cameraTarget.y - camera.position.y) * 0.05;
-    camera.position.z += (cameraTarget.z - camera.position.z) * 0.05;
-    camera.lookAt(cameraTarget.x, 0, cameraTarget.z);
+    // Update OrbitControls (required for damping)
+    controls.update();
     // Move stars towards camera (upward in Y direction)
     if (stars[0]) {
         const positions = stars[0].geometry.attributes.position.array;
