@@ -64,6 +64,7 @@ const planetTextures = {
     venus: 'textures/2k_venus_surface.jpg',
     earth: 'textures/2k_earth_daymap.jpg',
     earthClouds: 'textures/2k_earth_clouds.jpg',
+    earthNight: 'textures/2k_earth_nightmap.jpg',
     mars: 'textures/2k_mars.jpg',
     jupiter: 'textures/2k_jupiter.jpg',
     saturn: 'textures/2k_saturn.jpg',
@@ -305,18 +306,68 @@ function createPlanets() {
 
         const planet = new THREE.Mesh(geometry, material);
 
-        // Special handling for Earth - add clouds layer
+        // Special handling for Earth - add clouds layer and night lights
         if (data.name === 'Earth') {
             // Load Earth textures with high-quality filtering
-            const earthTexture = loadTextureWithFiltering(planetTextures.earth);
+            const earthDayTexture = loadTextureWithFiltering(planetTextures.earth);
+            const earthNightTexture = loadTextureWithFiltering(planetTextures.earthNight);
             const cloudTexture = loadTextureWithFiltering(planetTextures.earthClouds);
 
-            // Update main material with Earth texture
-            planet.material = new THREE.MeshStandardMaterial({
-                map: earthTexture,
-                roughness: 0.9,
-                metalness: 0.1
+            // Create custom shader material for day/night blend
+            planet.material = new THREE.ShaderMaterial({
+                uniforms: {
+                    dayTexture: { value: earthDayTexture },
+                    nightTexture: { value: earthNightTexture },
+                    sunDirection: { value: new THREE.Vector3(0, 0, 0) }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+
+                    void main() {
+                        vUv = uv;
+                        vNormal = normalize(normalMatrix * normal);
+                        vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D dayTexture;
+                    uniform sampler2D nightTexture;
+                    uniform vec3 sunDirection;
+
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+
+                    void main() {
+                        // Calculate direction from planet to sun
+                        vec3 toSun = normalize(sunDirection - vPosition);
+
+                        // Calculate how much this fragment faces the sun
+                        float sunAmount = dot(vNormal, toSun);
+
+                        // Create smooth transition between day and night
+                        float mixAmount = smoothstep(-0.1, 0.1, sunAmount);
+
+                        // Sample both textures
+                        vec4 dayColor = texture2D(dayTexture, vUv);
+                        vec4 nightColor = texture2D(nightTexture, vUv);
+
+                        // Boost night lights intensity
+                        nightColor.rgb *= 2.5;
+
+                        // Mix between day and night
+                        vec4 finalColor = mix(nightColor, dayColor, mixAmount);
+
+                        gl_FragColor = finalColor;
+                    }
+                `
             });
+
+            // Store reference to update sun direction
+            planet.userData.nightMaterial = planet.material;
 
             // Add clouds layer (slightly larger sphere)
             const cloudsGeometry = new THREE.SphereGeometry(data.radius * 1.01, 128, 128);
@@ -1337,6 +1388,12 @@ function animate() {
 
         // Rotate planet on its axis
         planet.rotation.y += 0.01 * timeScale;
+
+        // Update Earth's day/night shader with sun position
+        if (planet.userData.nightMaterial) {
+            // Sun is at origin (0, 0, 0)
+            planet.userData.nightMaterial.uniforms.sunDirection.value.set(0, 0, 0);
+        }
 
         // Animate Earth's clouds (rotate slightly faster than planet)
         if (planet.userData.clouds) {
