@@ -618,12 +618,16 @@ function onPlanetClick(event) {
             document.getElementById('panel-desc').textContent = planetInfoData[name].desc;
 
             panel.classList.remove('hidden');
+
+            // Zoom in when focused
+            cameraDistance = 300;
         }
 
     } else if (focusedPlanet) {
         // Click empty space to unfocus
         focusedPlanet = null;
-        cameraTarget = { x: 0, y: 1200, z: 0 };
+        cameraDistance = 1200;
+        cameraTarget = { x: 0, y: cameraDistance, z: 0 };
         document.getElementById('planet-info-panel').classList.add('hidden');
     }
 
@@ -954,7 +958,8 @@ function onMouseWheel(event) {
     cameraDistance += event.deltaY * 0.5;
     cameraDistance = Math.max(minDistance, Math.min(maxDistance, cameraDistance));
 
-    camera.position.y = cameraDistance;
+    // Update target immediately for responsiveness
+    cameraTarget.y = cameraDistance;
 }
 
 // Window resize
@@ -1126,7 +1131,12 @@ function animate() {
     if (focusedPlanet) {
         cameraTarget.x = focusedPlanet.position.x;
         cameraTarget.z = focusedPlanet.position.z;
-        cameraTarget.y = 300;
+        cameraTarget.y = cameraDistance;
+    } else {
+        // Overview mode
+        cameraTarget.x = 0;
+        cameraTarget.z = 0;
+        cameraTarget.y = cameraDistance;
     }
 
     // Smooth camera movement
