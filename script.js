@@ -312,6 +312,20 @@ function createSun() {
     sunGroup.position.set(0, 0, 0);
 
     scene.add(sunGroup);
+
+    // Add orbital path lines for each planet
+    planetData.forEach(data => {
+        const orbitGeometry = new THREE.RingGeometry(data.distance - 0.5, data.distance + 0.5, 128);
+        const orbitMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+        });
+        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+        orbit.rotation.x = Math.PI / 2;
+        scene.add(orbit);
+    });
 }
 
 // Create 3D planets
