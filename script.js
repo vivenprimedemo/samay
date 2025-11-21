@@ -164,9 +164,6 @@ function init() {
     // Initialize Planet Data
     initPlanetData();
 
-    // Add Atmospheres
-    addAtmospheres();
-
     // Create Wormhole
     createWormhole();
 
